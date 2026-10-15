@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QLHopDongHoSo.API.DTOs.Contracts;
 using QLHopDongHoSo.API.Services;
@@ -23,7 +23,6 @@ public class ContractController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var contracts = await _contractService.GetAllAsync();
-
         return Ok(contracts);
     }
 
@@ -35,10 +34,7 @@ public class ContractController : ControllerBase
 
         if (contract == null)
         {
-            return NotFound(new
-            {
-                message = "Không tìm thấy hợp đồng."
-            });
+            return NotFound(new { message = "Không tìm thấy hợp đồng." });
         }
 
         return Ok(contract);
@@ -46,171 +42,87 @@ public class ContractController : ControllerBase
 
     // POST: api/Contract
     [HttpPost]
-    [Authorize(Roles = "Admin,Quản lý")]
-    public async Task<IActionResult> Create(
-        [FromBody] ContractCreateRequest request)
+    [Authorize(Roles = "Admin,Quản lý,Manager")]
+    public async Task<IActionResult> Create([FromBody] ContractCreateRequest request)
     {
-        // Kiểm tra mã hợp đồng
         if (string.IsNullOrWhiteSpace(request.ContractCode))
         {
-            return BadRequest(new
-            {
-                message = "Mã hợp đồng không được để trống."
-            });
+            return BadRequest(new { message = "Mã hợp đồng không được để trống." });
         }
 
-        // Kiểm tra tên hợp đồng
-        if (string.IsNullOrWhiteSpace(request.ContractName))
-        {
-            return BadRequest(new
-            {
-                message = "Tên hợp đồng không được để trống."
-            });
-        }
-
-        // Kiểm tra trạng thái
         if (string.IsNullOrWhiteSpace(request.Status))
         {
-            return BadRequest(new
-            {
-                message = "Trạng thái không được để trống."
-            });
-        }
-        if (request.Status != "Đang hiệu lực")
-        {
-            return BadRequest(new
-            {
-                message = "Trạng thái không hợp lệ. Trạng thái hiện được hỗ trợ là 'Đang hiệu lực'."
-            });
-        }
-        // Kiểm tra ngày bắt đầu và ngày kết thúc
-        if (request.StartDate.HasValue &&
-            request.EndDate.HasValue &&
-            request.StartDate > request.EndDate)
-        {
-            return BadRequest(new
-            {
-                message = "Ngày bắt đầu không được lớn hơn ngày kết thúc."
-            });
+            request.Status = "DRAFT";
         }
 
-        // Lấy UserId từ JWT
+        var startDate = request.EffectiveDate ?? request.StartDate;
+        var endDate = request.ExpiryDate ?? request.EndDate;
+
+        if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+        {
+            return BadRequest(new { message = "Ngày bắt đầu/hiệu lực không được lớn hơn ngày kết thúc/hết hạn." });
+        }
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(new
-            {
-                message = "Không xác định được người dùng đăng nhập."
-            });
+            return Unauthorized(new { message = "Không xác định được người dùng đăng nhập." });
         }
 
         try
         {
-            var contract = await _contractService.CreateAsync(
-                request,
-                userId);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = contract.ContractId },
-                contract);
+            var contract = await _contractService.CreateAsync(request, userId);
+            return CreatedAtAction(nameof(GetById), new { id = contract.ContractId }, contract);
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new
-            {
-                message = ex.Message
-            });
+            return Conflict(new { message = ex.Message });
         }
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<ContractSearchResponse>> Search(
-    [FromQuery] ContractSearchRequest request)
+    public async Task<ActionResult<ContractSearchResponse>> Search([FromQuery] ContractSearchRequest request)
     {
-        if (request.StartDate.HasValue &&
-            request.EndDate.HasValue &&
-            request.StartDate > request.EndDate)
+        if (request.StartDate.HasValue && request.EndDate.HasValue && request.StartDate > request.EndDate)
         {
-            return BadRequest(new
-            {
-                message = "StartDate không được lớn hơn EndDate."
-            });
+            return BadRequest(new { message = "StartDate không được lớn hơn EndDate." });
         }
 
         var result = await _contractService.SearchAsync(request);
-
         return Ok(result);
     }
 
     // PUT: api/Contract/1
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin,Quản lý")]
-    public async Task<IActionResult> Update(
-        int id,
-        [FromBody] ContractUpdateRequest request)
+    [Authorize(Roles = "Admin,Quản lý,Manager")]
+    public async Task<IActionResult> Update(int id, [FromBody] ContractUpdateRequest request)
     {
-        // Kiểm tra mã hợp đồng
         if (string.IsNullOrWhiteSpace(request.ContractCode))
         {
-            return BadRequest(new
-            {
-                message = "Mã hợp đồng không được để trống."
-            });
+            return BadRequest(new { message = "Mã hợp đồng không được để trống." });
         }
 
-        // Kiểm tra tên hợp đồng
-        if (string.IsNullOrWhiteSpace(request.ContractName))
-        {
-            return BadRequest(new
-            {
-                message = "Tên hợp đồng không được để trống."
-            });
-        }
+        var startDate = request.EffectiveDate ?? request.StartDate;
+        var endDate = request.ExpiryDate ?? request.EndDate;
 
-        // Kiểm tra trạng thái
-        if (string.IsNullOrWhiteSpace(request.Status))
+        if (startDate.HasValue && endDate.HasValue && startDate > endDate)
         {
-            return BadRequest(new
-            {
-                message = "Trạng thái không được để trống."
-            });
-        }
-
-        // Kiểm tra ngày
-        if (request.StartDate.HasValue &&
-            request.EndDate.HasValue &&
-            request.StartDate > request.EndDate)
-        {
-            return BadRequest(new
-            {
-                message = "Ngày bắt đầu không được lớn hơn ngày kết thúc."
-            });
+            return BadRequest(new { message = "Ngày bắt đầu/hiệu lực không được lớn hơn ngày kết thúc/hết hạn." });
         }
 
         try
         {
-            var contract = await _contractService.UpdateAsync(
-                id,
-                request);
-
+            var contract = await _contractService.UpdateAsync(id, request);
             if (contract == null)
             {
-                return NotFound(new
-                {
-                    message = "Không tìm thấy hợp đồng."
-                });
+                return NotFound(new { message = "Không tìm thấy hợp đồng." });
             }
 
             return Ok(contract);
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new
-            {
-                message = ex.Message
-            });
+            return Conflict(new { message = ex.Message });
         }
     }
 
@@ -220,18 +132,11 @@ public class ContractController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _contractService.DeleteAsync(id);
-
         if (!deleted)
         {
-            return NotFound(new
-            {
-                message = "Không tìm thấy hợp đồng."
-            });
+            return NotFound(new { message = "Không tìm thấy hợp đồng." });
         }
 
-        return Ok(new
-        {
-            message = "Xóa hợp đồng thành công."
-        });
+        return Ok(new { message = "Xóa hợp đồng thành công." });
     }
 }

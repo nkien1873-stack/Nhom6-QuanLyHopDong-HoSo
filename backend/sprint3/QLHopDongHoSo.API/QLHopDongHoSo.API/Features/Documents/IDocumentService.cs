@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using QLHopDongHoSo.API.DTOs.Documents;
 
 namespace QLHopDongHoSo.API.Services;
@@ -6,7 +6,8 @@ namespace QLHopDongHoSo.API.Services;
 public interface IDocumentService
 {
     Task<DocumentResponse> UploadAsync(
-        int contractId,
+        int applicationId,
+        string documentType,
         IFormFile file,
         int userId);
 

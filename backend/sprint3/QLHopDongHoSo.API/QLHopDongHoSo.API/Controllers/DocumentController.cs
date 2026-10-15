@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLHopDongHoSo.API.Data;
@@ -30,26 +30,27 @@ public class DocumentController : ControllerBase
     // =====================================================
     // GET ALL DOCUMENTS
     // =====================================================
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DocumentResponse>>> GetAll()
     {
         var documents = await _context.Documents
             .Include(d => d.Uploader)
+            .Include(d => d.Verifier)
             .OrderByDescending(d => d.UploadedAt)
             .Select(d => new DocumentResponse
             {
                 DocumentId = d.DocumentId,
-                ContractId = d.ContractId,
-                FileName = d.FileName,
+                ApplicationId = d.ApplicationId,
+                DocumentType = d.DocumentType,
+                DocumentName = d.DocumentName,
                 FilePath = d.FilePath,
-                FileType = d.FileType,
-                FileSize = d.FileSize,
                 UploadedBy = d.UploadedBy,
-                UploadedByUsername = d.Uploader != null
-                    ? d.Uploader.Username
-                    : null,
-                UploadedAt = d.UploadedAt
+                UploadedByUsername = d.Uploader != null ? d.Uploader.Username : null,
+                UploadedAt = d.UploadedAt,
+                VerificationStatus = d.VerificationStatus,
+                VerifiedBy = d.VerifiedBy,
+                VerifiedByUsername = d.Verifier != null ? d.Verifier.Username : null,
+                VerifiedAt = d.VerifiedAt
             })
             .ToListAsync();
 
@@ -59,35 +60,33 @@ public class DocumentController : ControllerBase
     // =====================================================
     // GET DOCUMENT BY ID
     // =====================================================
-
     [HttpGet("{id:int}")]
     public async Task<ActionResult<DocumentResponse>> GetById(int id)
     {
         var document = await _context.Documents
             .Include(d => d.Uploader)
+            .Include(d => d.Verifier)
             .Where(d => d.DocumentId == id)
             .Select(d => new DocumentResponse
             {
                 DocumentId = d.DocumentId,
-                ContractId = d.ContractId,
-                FileName = d.FileName,
+                ApplicationId = d.ApplicationId,
+                DocumentType = d.DocumentType,
+                DocumentName = d.DocumentName,
                 FilePath = d.FilePath,
-                FileType = d.FileType,
-                FileSize = d.FileSize,
                 UploadedBy = d.UploadedBy,
-                UploadedByUsername = d.Uploader != null
-                    ? d.Uploader.Username
-                    : null,
-                UploadedAt = d.UploadedAt
+                UploadedByUsername = d.Uploader != null ? d.Uploader.Username : null,
+                UploadedAt = d.UploadedAt,
+                VerificationStatus = d.VerificationStatus,
+                VerifiedBy = d.VerifiedBy,
+                VerifiedByUsername = d.Verifier != null ? d.Verifier.Username : null,
+                VerifiedAt = d.VerifiedAt
             })
             .FirstOrDefaultAsync();
 
         if (document == null)
         {
-            return NotFound(new
-            {
-                message = "Không tìm thấy tài liệu."
-            });
+            return NotFound(new { message = "Không tìm thấy tài liệu." });
         }
 
         return Ok(document);
@@ -96,20 +95,15 @@ public class DocumentController : ControllerBase
     // =====================================================
     // VALIDATE FILE
     // =====================================================
-
     [HttpPost("validate")]
     [Consumes("multipart/form-data")]
     public IActionResult ValidateFile(IFormFile file)
     {
-        var error =
-            _fileValidationService.Validate(file);
+        var error = _fileValidationService.Validate(file);
 
         if (error != null)
         {
-            return BadRequest(new
-            {
-                message = error
-            });
+            return BadRequest(new { message = error });
         }
 
         return Ok(new
@@ -124,35 +118,47 @@ public class DocumentController : ControllerBase
     // =====================================================
     // UPLOAD FILE
     // =====================================================
-
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<DocumentResponse>> Upload(
-        [FromForm] DocumentUploadRequest request)
+    public async Task<ActionResult<DocumentResponse>> Upload([FromForm] DocumentUploadRequest request)
     {
         if (request.File == null)
         {
-            return BadRequest(new
-            {
-                message = "Vui lòng chọn file."
-            });
+            return BadRequest(new { message = "Vui lòng chọn file." });
         }
 
-        var userIdClaim =
-            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(new
+            return Unauthorized(new { message = "Không xác định được người dùng." });
+        }
+
+        var applicationId = request.ApplicationId;
+        // Fallback nếu client cũ gửi ContractId
+        if (applicationId == 0 && request.ContractId.HasValue && request.ContractId.Value > 0)
+        {
+            var contract = await _context.Contracts.FindAsync(request.ContractId.Value);
+            if (contract != null)
             {
-                message = "Không xác định được người dùng."
-            });
+                applicationId = contract.ApplicationId;
+            }
+        }
+
+        if (applicationId == 0)
+        {
+            var defaultApp = await _context.Applications.FirstOrDefaultAsync();
+            if (defaultApp == null)
+            {
+                return BadRequest(new { message = "Cần chỉ định ApplicationId để tải lên tài liệu." });
+            }
+            applicationId = defaultApp.ApplicationId;
         }
 
         try
         {
             var result = await _documentService.UploadAsync(
-                request.ContractId,
+                applicationId,
+                request.DocumentType,
                 request.File,
                 userId);
 
@@ -163,38 +169,27 @@ public class DocumentController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new
-            {
-                message = ex.Message
-            });
+            return NotFound(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new
-            {
-                message = ex.Message
-            });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
     // =====================================================
     // DOWNLOAD FILE
     // =====================================================
-
     [HttpGet("{id:int}/download")]
     public async Task<IActionResult> Download(int id)
     {
         try
         {
-            var result =
-                await _documentService.DownloadAsync(id);
+            var result = await _documentService.DownloadAsync(id);
 
             if (result == null)
             {
-                return NotFound(new
-                {
-                    message = "Không tìm thấy tài liệu."
-                });
+                return NotFound(new { message = "Không tìm thấy tài liệu." });
             }
 
             return File(
@@ -204,10 +199,7 @@ public class DocumentController : ControllerBase
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new
-            {
-                message = ex.Message
-            });
+            return NotFound(new { message = ex.Message });
         }
     }
 }

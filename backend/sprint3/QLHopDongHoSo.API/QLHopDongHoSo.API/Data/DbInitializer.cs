@@ -1,15 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using QLHopDongHoSo.API.Models;
 
 namespace QLHopDongHoSo.API.Data;
 
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(
-        ApplicationDbContext context)
+    public static async Task InitializeAsync(ApplicationDbContext context)
     {
-        // Đảm bảo database đã được migrate
-        await context.Database.MigrateAsync();
+        // Kiểm tra kết nối
+        if (!await context.Database.CanConnectAsync())
+        {
+            return;
+        }
 
         // Nếu đã có User thì không tạo lại
         if (await context.Users.AnyAsync())
@@ -18,30 +20,25 @@ public static class DbInitializer
         }
 
         // Lấy Role Admin
-        var adminRole = await context.Roles
-            .FirstAsync(r => r.RoleName == "Admin");
+        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
+        var defaultBranch = await context.Branches.FirstOrDefaultAsync();
 
-        // Tạo Admin
-        var admin = new User
+        if (adminRole != null)
         {
-            Username = "admin",
+            var admin = new User
+            {
+                Username = "admin",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                FullName = "System Administrator",
+                Email = "admin@example.com",
+                RoleId = adminRole.RoleId,
+                BranchId = defaultBranch?.BranchId,
+                Status = "ACTIVE",
+                CreatedAt = DateTime.UtcNow
+            };
 
-            PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-
-            FullName = "System Administrator",
-
-            Email = "admin@example.com",
-
-            RoleId = adminRole.RoleId,
-
-            IsActive = true,
-
-            CreatedAt = DateTime.UtcNow
-        };
-
-        context.Users.Add(admin);
-
-        await context.SaveChangesAsync();
+            context.Users.Add(admin);
+            await context.SaveChangesAsync();
+        }
     }
 }

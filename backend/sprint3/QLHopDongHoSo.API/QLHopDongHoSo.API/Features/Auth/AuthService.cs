@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -21,21 +21,95 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
-    public async Task<LoginResponse?> LoginAsync(LoginRequest request)
+    // ĐĂNG KÝ
+    public async Task<RegisterResponse?> RegisterAsync(
+        RegisterRequest request)
     {
-        // 1. Tìm user đang hoạt động
+        var username = request.Username.Trim();
+
+        // 1. Kiểm tra username đã tồn tại
+        var existingUser = await _context.Users
+            .AnyAsync(u => u.Username == username);
+
+        if (existingUser)
+        {
+            return null;
+        }
+
+        // 2. Lấy role mặc định từ cấu hình
+        var defaultRoleName =
+            _configuration["Auth:DefaultRoleName"];
+
+        if (string.IsNullOrWhiteSpace(defaultRoleName))
+        {
+            throw new InvalidOperationException(
+                "Chưa cấu hình Auth:DefaultRoleName.");
+        }
+
+        var role = await _context.Roles
+            .FirstOrDefaultAsync(r =>
+                r.RoleName == defaultRoleName);
+
+        if (role == null)
+        {
+            throw new InvalidOperationException(
+                $"Không tìm thấy role '{defaultRoleName}'.");
+        }
+
+        // 3. Mã hóa password
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(
+            request.Password);
+
+        // 4. Tạo user mới
+        var user = new Models.User
+        {
+            Username = username,
+            PasswordHash = passwordHash,
+            FullName = request.FullName.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email)
+                ? null
+                : request.Email.Trim(),
+            Phone = string.IsNullOrWhiteSpace(request.Phone)
+                ? null
+                : request.Phone.Trim(),
+
+            RoleId = role.RoleId,
+            Status = "ACTIVE",
+            CreatedAt = DateTime.Now
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // 5. Trả thông tin tài khoản
+        return new RegisterResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = role.RoleName,
+            Message = "Đăng ký tài khoản thành công."
+        };
+    }
+
+    // ĐĂNG NHẬP
+    public async Task<LoginResponse?> LoginAsync(
+        LoginRequest request)
+    {
+        var username = request.Username.Trim();
+
         var user = await _context.Users
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u =>
-                u.Username == request.Username &&
-                u.IsActive);
+                u.Username == username &&
+                u.Status == "ACTIVE");
 
         if (user == null)
         {
             return null;
         }
 
-        // 2. Kiểm tra password
         var passwordValid = BCrypt.Net.BCrypt.Verify(
             request.Password,
             user.PasswordHash);
@@ -45,13 +119,11 @@ public class AuthService : IAuthService
             return null;
         }
 
-        // 3. Tạo JWT
         var token = GenerateJwtToken(
             user.UserId,
             user.Username,
             user.Role!.RoleName);
 
-        // 4. Trả kết quả
         return new LoginResponse
         {
             Token = token,
@@ -62,6 +134,7 @@ public class AuthService : IAuthService
         };
     }
 
+    // TẠO JWT
     private string GenerateJwtToken(
         int userId,
         string username,
@@ -80,6 +153,12 @@ public class AuthService : IAuthService
 
         var duration = _configuration.GetValue<int>(
             "Jwt:DurationInMinutes");
+
+        if (duration <= 0)
+        {
+            throw new InvalidOperationException(
+                "Jwt:DurationInMinutes phải lớn hơn 0.");
+        }
 
         var claims = new List<Claim>
         {

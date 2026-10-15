@@ -22,220 +22,797 @@ namespace QLHopDongHoSo.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Application", b =>
+                {
+                    b.Property<int>("ApplicationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ApplicationID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
+
+                    b.Property<string>("ApplicationCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("ApplicationCode");
+
+                    b.Property<string>("ApplicationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ApplicationType");
+
+                    b.Property<int?>("AssignedTo")
+                        .HasColumnType("int")
+                        .HasColumnName("AssignedTo");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int")
+                        .HasColumnName("BranchID");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CompletedAt");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int")
+                        .HasColumnName("CustomerID");
+
+                    b.Property<string>("Priority")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Priority");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("Status");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("SubmittedAt");
+
+                    b.HasKey("ApplicationId");
+
+                    b.HasIndex("ApplicationCode")
+                        .IsUnique();
+
+                    b.HasIndex("AssignedTo");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("APPLICATIONS", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Approval", b =>
+                {
+                    b.Property<int>("ApprovalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ApprovalID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApprovalId"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int")
+                        .HasColumnName("ApplicationID");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ApprovedAt");
+
+                    b.Property<int>("ApproverId")
+                        .HasColumnType("int")
+                        .HasColumnName("ApproverID");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("Comment");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("Status");
+
+                    b.HasKey("ApprovalId");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.HasIndex("ApproverId");
+
+                    b.ToTable("APPROVALS", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.AuditLog", b =>
+                {
+                    b.Property<long>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("LogID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("LogId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("Action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("Description");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("EntityID");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("EntityType");
+
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)")
+                        .HasColumnName("IPAddress");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserID");
+
+                    b.HasKey("LogId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AUDIT_LOGS", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Branch", b =>
+                {
+                    b.Property<int>("BranchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("BranchID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BranchId"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Address");
+
+                    b.Property<string>("BranchCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("BranchCode");
+
+                    b.Property<string>("BranchName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("BranchName");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Phone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Status");
+
+                    b.HasKey("BranchId");
+
+                    b.HasIndex("BranchCode")
+                        .IsUnique();
+
+                    b.ToTable("BRANCHES", (string)null);
+                });
+
             modelBuilder.Entity("QLHopDongHoSo.API.Models.Contract", b =>
                 {
                     b.Property<int>("ContractId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ContractID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractId"));
 
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int")
+                        .HasColumnName("ApplicationID");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int")
+                        .HasColumnName("BranchID");
+
                     b.Property<string>("ContractCode")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("ContractCode");
 
-                    b.Property<string>("ContractName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<int>("ContractTypeId")
+                        .HasColumnType("int")
+                        .HasColumnName("ContractTypeID");
+
+                    b.Property<decimal?>("ContractValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("ContractValue");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedAt");
 
                     b.Property<int>("CreatedBy")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("CreatedBy");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<DateTime?>("EffectiveDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("EffectiveDate");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ExpiryDate");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime?>("SignedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("SignedDate");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("Status");
 
                     b.HasKey("ContractId");
 
+                    b.HasIndex("ApplicationId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("ContractCode")
+                        .IsUnique();
+
+                    b.HasIndex("ContractTypeId");
+
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Contracts");
+                    b.ToTable("CONTRACTS", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.ContractStatusHistory", b =>
+                {
+                    b.Property<int>("HistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("HistoryID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistoryId"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ChangedAt");
+
+                    b.Property<int>("ChangedBy")
+                        .HasColumnType("int")
+                        .HasColumnName("ChangedBy");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int")
+                        .HasColumnName("ContractID");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("NewStatus");
+
+                    b.Property<string>("OldStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("OldStatus");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("Reason");
+
+                    b.HasKey("HistoryId");
+
+                    b.HasIndex("ChangedBy");
+
+                    b.HasIndex("ContractId");
+
+                    b.ToTable("CONTRACT_STATUS_HISTORY", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.ContractType", b =>
+                {
+                    b.Property<int>("ContractTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ContractTypeID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractTypeId"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Description");
+
+                    b.Property<string>("TypeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("TypeName");
+
+                    b.HasKey("ContractTypeId");
+
+                    b.HasIndex("TypeName")
+                        .IsUnique();
+
+                    b.ToTable("CONTRACT_TYPES", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Customer", b =>
+                {
+                    b.Property<int>("CustomerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("CustomerID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Address");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CustomerCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("CustomerCode");
+
+                    b.Property<string>("CustomerType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("CustomerType");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DateOfBirth");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("Email");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("FullName");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Gender");
+
+                    b.Property<string>("IdentityNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("IdentityNumber");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Phone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Status");
+
+                    b.HasKey("CustomerId");
+
+                    b.HasIndex("CustomerCode")
+                        .IsUnique();
+
+                    b.ToTable("CUSTOMERS", (string)null);
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.Document", b =>
                 {
                     b.Property<int>("DocumentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("DocumentID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocumentId"));
 
-                    b.Property<int>("ContractId")
-                        .HasColumnType("int");
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int")
+                        .HasColumnName("ApplicationID");
 
-                    b.Property<string>("FileName")
+                    b.Property<string>("DocumentName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("DocumentName");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("DocumentType");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<long?>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("FileType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("FilePath");
 
                     b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("UploadedAt");
 
                     b.Property<int>("UploadedBy")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("UploadedBy");
+
+                    b.Property<string>("VerificationStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("VerificationStatus");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("VerifiedAt");
+
+                    b.Property<int?>("VerifiedBy")
+                        .HasColumnType("int")
+                        .HasColumnName("VerifiedBy");
 
                     b.HasKey("DocumentId");
 
-                    b.HasIndex("ContractId");
+                    b.HasIndex("ApplicationId");
 
                     b.HasIndex("UploadedBy");
 
-                    b.ToTable("Documents");
+                    b.HasIndex("VerifiedBy");
+
+                    b.ToTable("DOCUMENTS", (string)null);
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.Role", b =>
                 {
                     b.Property<int>("RoleId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("RoleID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoleId"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Description");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("RoleName");
 
                     b.HasKey("RoleId");
 
-                    b.ToTable("Roles");
+                    b.HasIndex("RoleName")
+                        .IsUnique();
 
-                    b.HasData(
-                        new
-                        {
-                            RoleId = 1,
-                            RoleName = "Admin"
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            RoleName = "Nhân viên"
-                        },
-                        new
-                        {
-                            RoleId = 3,
-                            RoleName = "Quản lý"
-                        });
+                    b.ToTable("ROLES", (string)null);
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.User", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("UserID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("int")
+                        .HasColumnName("BranchID");
+
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedAt");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("Email");
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("FullName");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("PasswordHash");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Phone");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("RoleID");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Status");
 
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("Username");
 
                     b.HasKey("UserId");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users");
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("USERS", (string)null);
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Application", b =>
+                {
+                    b.HasOne("QLHopDongHoSo.API.Models.User", "Assignee")
+                        .WithMany("AssignedApplications")
+                        .HasForeignKey("AssignedTo")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QLHopDongHoSo.API.Models.Branch", "Branch")
+                        .WithMany("Applications")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QLHopDongHoSo.API.Models.Customer", "Customer")
+                        .WithMany("Applications")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Assignee");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Approval", b =>
+                {
+                    b.HasOne("QLHopDongHoSo.API.Models.Application", "Application")
+                        .WithMany("Approvals")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QLHopDongHoSo.API.Models.User", "Approver")
+                        .WithMany("Approvals")
+                        .HasForeignKey("ApproverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+
+                    b.Navigation("Approver");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.AuditLog", b =>
+                {
+                    b.HasOne("QLHopDongHoSo.API.Models.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.Contract", b =>
                 {
+                    b.HasOne("QLHopDongHoSo.API.Models.Application", "Application")
+                        .WithMany("Contracts")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QLHopDongHoSo.API.Models.Branch", "Branch")
+                        .WithMany("Contracts")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QLHopDongHoSo.API.Models.ContractType", "ContractType")
+                        .WithMany("Contracts")
+                        .HasForeignKey("ContractTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("QLHopDongHoSo.API.Models.User", "Creator")
-                        .WithMany()
+                        .WithMany("CreatedContracts")
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Application");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("ContractType");
+
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("QLHopDongHoSo.API.Models.Document", b =>
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.ContractStatusHistory", b =>
                 {
-                    b.HasOne("QLHopDongHoSo.API.Models.Contract", "Contract")
+                    b.HasOne("QLHopDongHoSo.API.Models.User", "Changer")
                         .WithMany()
+                        .HasForeignKey("ChangedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QLHopDongHoSo.API.Models.Contract", "Contract")
+                        .WithMany("StatusHistories")
                         .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Changer");
+
+                    b.Navigation("Contract");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Document", b =>
+                {
+                    b.HasOne("QLHopDongHoSo.API.Models.Application", "Application")
+                        .WithMany("Documents")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("QLHopDongHoSo.API.Models.User", "Uploader")
-                        .WithMany()
+                        .WithMany("UploadedDocuments")
                         .HasForeignKey("UploadedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contract");
+                    b.HasOne("QLHopDongHoSo.API.Models.User", "Verifier")
+                        .WithMany()
+                        .HasForeignKey("VerifiedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Application");
 
                     b.Navigation("Uploader");
+
+                    b.Navigation("Verifier");
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.User", b =>
                 {
+                    b.HasOne("QLHopDongHoSo.API.Models.Branch", "Branch")
+                        .WithMany("Users")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QLHopDongHoSo.API.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Branch");
+
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Application", b =>
+                {
+                    b.Navigation("Approvals");
+
+                    b.Navigation("Contracts");
+
+                    b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Branch", b =>
+                {
+                    b.Navigation("Applications");
+
+                    b.Navigation("Contracts");
+
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Contract", b =>
+                {
+                    b.Navigation("StatusHistories");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.ContractType", b =>
+                {
+                    b.Navigation("Contracts");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.Customer", b =>
+                {
+                    b.Navigation("Applications");
                 });
 
             modelBuilder.Entity("QLHopDongHoSo.API.Models.Role", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("QLHopDongHoSo.API.Models.User", b =>
+                {
+                    b.Navigation("Approvals");
+
+                    b.Navigation("AssignedApplications");
+
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("CreatedContracts");
+
+                    b.Navigation("UploadedDocuments");
                 });
 #pragma warning restore 612, 618
         }

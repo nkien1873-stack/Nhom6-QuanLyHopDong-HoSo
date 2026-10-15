@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using QLHopDongHoSo.API.Configuration;
@@ -28,28 +28,25 @@ public class DocumentService : IDocumentService
     }
 
     public async Task<DocumentResponse> UploadAsync(
-        int contractId,
+        int applicationId,
+        string documentType,
         IFormFile file,
         int userId)
     {
-        // 1. Kiểm tra hợp đồng tồn tại
-        var contractExists = await _context.Contracts
-            .AnyAsync(c => c.ContractId == contractId);
+        // 1. Kiểm tra hồ sơ tồn tại
+        var applicationExists = await _context.Applications
+            .AnyAsync(a => a.ApplicationId == applicationId);
 
-        if (!contractExists)
+        if (!applicationExists)
         {
-            throw new KeyNotFoundException(
-                "Không tìm thấy hợp đồng.");
+            throw new KeyNotFoundException("Không tìm thấy hồ sơ liên kết.");
         }
 
         // 2. Validate file
-        var validationError =
-            _fileValidationService.Validate(file);
-
+        var validationError = _fileValidationService.Validate(file);
         if (validationError != null)
         {
-            throw new InvalidOperationException(
-                validationError);
+            throw new InvalidOperationException(validationError);
         }
 
         // 3. Tạo thư mục lưu file
@@ -60,47 +57,37 @@ public class DocumentService : IDocumentService
         Directory.CreateDirectory(storagePath);
 
         // 4. Lấy extension
-        var extension =
-            Path.GetExtension(file.FileName);
+        var extension = Path.GetExtension(file.FileName);
 
         // 5. Tạo tên file lưu duy nhất
-        var storedFileName =
-            $"{Guid.NewGuid():N}{extension}";
-
-        var physicalFilePath =
-            Path.Combine(storagePath, storedFileName);
+        var storedFileName = $"{Guid.NewGuid():N}{extension}";
+        var physicalFilePath = Path.Combine(storagePath, storedFileName);
 
         // 6. Lưu file vật lý
-        await using (var stream =
-            new FileStream(
-                physicalFilePath,
-                FileMode.Create))
+        await using (var stream = new FileStream(physicalFilePath, FileMode.Create))
         {
             await file.CopyToAsync(stream);
         }
 
         // 7. Đường dẫn tương đối lưu DB
-        var relativeFilePath =
-            $"{_options.StoragePath}/{storedFileName}"
-                .Replace("\\", "/");
+        var relativeFilePath = $"{_options.StoragePath}/{storedFileName}".Replace("\\", "/");
 
-        // 8. Tạo metadata
+        // 8. Tạo metadata tài liệu
         var document = new Document
         {
-            ContractId = contractId,
-            FileName = Path.GetFileName(file.FileName),
+            ApplicationId = applicationId,
+            DocumentType = string.IsNullOrWhiteSpace(documentType) ? "ATTACHMENT" : documentType,
+            DocumentName = Path.GetFileName(file.FileName),
             FilePath = relativeFilePath,
-            FileType = file.ContentType,
-            FileSize = file.Length,
             UploadedBy = userId,
-            UploadedAt = DateTime.UtcNow
+            UploadedAt = DateTime.UtcNow,
+            VerificationStatus = "PENDING"
         };
 
         _context.Documents.Add(document);
-
         await _context.SaveChangesAsync();
 
-        // 9. Lấy username
+        // 9. Lấy username người upload
         var username = await _context.Users
             .Where(u => u.UserId == userId)
             .Select(u => u.Username)
@@ -109,14 +96,14 @@ public class DocumentService : IDocumentService
         return new DocumentResponse
         {
             DocumentId = document.DocumentId,
-            ContractId = document.ContractId,
-            FileName = document.FileName,
+            ApplicationId = document.ApplicationId,
+            DocumentType = document.DocumentType,
+            DocumentName = document.DocumentName,
             FilePath = document.FilePath,
-            FileType = document.FileType,
-            FileSize = document.FileSize,
             UploadedBy = document.UploadedBy,
             UploadedByUsername = username,
-            UploadedAt = document.UploadedAt
+            UploadedAt = document.UploadedAt,
+            VerificationStatus = document.VerificationStatus
         };
     }
 
@@ -124,8 +111,7 @@ public class DocumentService : IDocumentService
         DownloadAsync(int documentId)
     {
         var document = await _context.Documents
-            .FirstOrDefaultAsync(
-                d => d.DocumentId == documentId);
+            .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
         if (document == null)
         {
@@ -134,22 +120,19 @@ public class DocumentService : IDocumentService
 
         var physicalPath = Path.Combine(
             _environment.ContentRootPath,
-            document.FilePath
-                .Replace("/", Path.DirectorySeparatorChar.ToString()));
+            document.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
         if (!File.Exists(physicalPath))
         {
-            throw new FileNotFoundException(
-                "File không tồn tại trên hệ thống lưu trữ.");
+            throw new FileNotFoundException("File không tồn tại trên hệ thống lưu trữ.");
         }
 
-        var content =
-            await File.ReadAllBytesAsync(physicalPath);
+        var content = await File.ReadAllBytesAsync(physicalPath);
 
         return (
             content,
-            document.FileType ?? "application/octet-stream",
-            document.FileName
+            "application/octet-stream",
+            document.DocumentName
         );
     }
 }
