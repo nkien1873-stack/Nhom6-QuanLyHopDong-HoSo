@@ -1,0 +1,19 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+
+.git/
+.gitignore
+
+*.user
+*.suo
+
+# File người dùng upload trên máy dev (Docker dùng volume riêng)
+**/Storage/Documents/
+
+# Cấu hình riêng từng máy (connection string local...)
+**/appsettings.Development.json
+
+# Code giao diện: image backend không cần (container frontend nginx build riêng từ ClientApp)
+**/ClientApp/

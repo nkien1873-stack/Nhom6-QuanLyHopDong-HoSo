@@ -440,3 +440,6 @@ dist/
 build/
 # Uploaded document files
 backend/sprint3/QLHopDongHoSo.API/QLHopDongHoSo.API/Storage/Documents/*
+# Sprint 4 – file upload runtime
+backend/sprint4/QLHopDongHoSo.API/QLHopDongHoSo.API/Storage/Documents/*
+!backend/sprint4/QLHopDongHoSo.API/QLHopDongHoSo.API/Storage/Documents/.gitkeep
