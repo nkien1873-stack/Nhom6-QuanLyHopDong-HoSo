@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>3cab9c7e-2207-428a-ab49-bc034d0c5f02</UserSecretsId>
+    <!-- ClientApp = mã nguồn giao diện React; node_modules/dist không phải file của backend -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);ClientApp\node_modules\**;ClientApp\dist\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Code giao diện không biên dịch/không publish như file của backend (bản build nằm ở wwwroot) -->
+    <Compile Remove="ClientApp\**" />
+    <Content Remove="ClientApp\**" />
+    <EmbeddedResource Remove="ClientApp\**" />
+    <None Remove="ClientApp\**" />
+    <None Include="ClientApp\**" Exclude="ClientApp\node_modules\**;ClientApp\dist\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.20" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.20">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.20" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.20">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- File PDF cũ dùng khi chuyển dữ liệu Sprint 2–3, cần có trong bản publish/Docker -->
+    <Content Include="Data\SeedFiles\**" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+    <Folder Include="Storage\Documents\" />
+  </ItemGroup>
+
+  <!--
+    Chạy backend là có luôn giao diện: mỗi lần build (F5 trong Visual Studio, dotnet run) nếu code giao diện
+    (thư mục ClientApp/ trong project này) mới hơn bản đã build thì tự chạy npm và chép bản build vào wwwroot.
+    Không cần mở terminal chạy npm riêng. Code giao diện không đổi => bỏ qua, không làm chậm build.
+    - Không có ClientApp (vd build Docker, .dockerignore loại thư mục này) => bỏ qua.
+    - Máy chưa cài Node.js => chỉ cảnh báo, backend vẫn chạy (trang chủ hiện hướng dẫn).
+    - Tắt khi cần: dotnet build -p:SkipFrontendBuild=true
+  -->
+  <PropertyGroup>
+    <FrontendDir Condition="'$(FrontendDir)' == ''">$(MSBuildProjectDirectory)\ClientApp</FrontendDir>
+    <FrontendOut>$(MSBuildProjectDirectory)\wwwroot</FrontendOut>
+  </PropertyGroup>
+
+  <!-- Code frontend dùng để biết có cần build lại không (so với wwwroot\index.html) -->
+  <ItemGroup Condition="Exists('$(FrontendDir)\package.json')">
+    <FrontendSource Include="$(FrontendDir)\src\**;$(FrontendDir)\public\**;$(FrontendDir)\index.html;$(FrontendDir)\package.json;$(FrontendDir)\vite.config.js" />
+  </ItemGroup>
+
+  <Target Name="CheckNodeForFrontend" BeforeTargets="BuildFrontend"
+          Condition="'$(SkipFrontendBuild)' != 'true' And Exists('$(FrontendDir)\package.json')">
+    <Exec Command="node --version" ContinueOnError="true" StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="NodeExitCode" />
+    </Exec>
+    <Warning Condition="'$(NodeExitCode)' != '0'"
+             Text="Chưa cài Node.js nên không build được giao diện. Cài Node.js 20+ (https://nodejs.org) rồi build lại để chạy backend kèm giao diện." />
+  </Target>
+
+  <Target Name="BuildFrontend" BeforeTargets="Build"
+          Condition="'$(SkipFrontendBuild)' != 'true' And Exists('$(FrontendDir)\package.json')"
+          Inputs="@(FrontendSource)" Outputs="$(FrontendOut)\index.html">
+    <Message Condition="'$(NodeExitCode)' == '0'" Importance="high" Text="==> Build giao diện từ $(FrontendDir)" />
+    <Exec Condition="'$(NodeExitCode)' == '0' And !Exists('$(FrontendDir)\node_modules')" WorkingDirectory="$(FrontendDir)" Command="npm ci --no-audit --no-fund" />
+    <Exec Condition="'$(NodeExitCode)' == '0'" WorkingDirectory="$(FrontendDir)" Command="npm run build" />
+
+    <!-- Xóa bản cũ (tên file có mã băm thay đổi mỗi lần build) rồi chép dist vào wwwroot -->
+    <RemoveDir Condition="'$(NodeExitCode)' == '0'" Directories="$(FrontendOut)" />
+    <ItemGroup Condition="'$(NodeExitCode)' == '0'">
+      <FrontendDist Include="$(FrontendDir)\dist\**" />
+    </ItemGroup>
+    <Copy Condition="'$(NodeExitCode)' == '0'" SourceFiles="@(FrontendDist)" DestinationFiles="@(FrontendDist->'$(FrontendOut)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+</Project>
